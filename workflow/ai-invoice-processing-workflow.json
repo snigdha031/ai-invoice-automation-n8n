@@ -1,1 +1,802 @@
-
+{
+  "name": "AI Invoice Processing Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "invoice-upload",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -272,
+        0
+      ],
+      "id": "f43cee03-3a2c-4179-b86b-0253d079159e",
+      "name": "Webhook",
+      "webhookId": "8b502643-0922-4561-a411-a7c83531c64a"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "11b01914-e2a2-407e-a2aa-67b286619b6b",
+              "name": "invoice_text",
+              "value": "={{ $json.body.invoice_text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -144,
+        0
+      ],
+      "id": "a2d833ef-6ca0-4604-8acc-2f0ad3911cbb",
+      "name": "Mock Invoice Data"
+    },
+    {
+      "parameters": {
+        "jsCode": "const rawText = $json.output[0].content[0].text;\n\nconst cleanedText = rawText.replace(/```json|```/g, '').trim();\n\nconst parsed = JSON.parse(cleanedText);\n\nreturn [\n  {\n    json: parsed\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        256,
+        0
+      ],
+      "id": "f8389320-ee3b-4f63-8f0b-bb78b7018de8",
+      "name": "Parse Invoice JSON"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "95ebbc27-fe07-40ba-ab7b-c964cf61cc42",
+              "leftValue": "={{ $json.invoice_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {
+          "ignoreCase": false
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        416,
+        0
+      ],
+      "id": "0de6d86d-c916-4227-b600-395d4356eeda",
+      "name": "Validate Invoice Data"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "685e1726-6da9-4151-9866-c88a667ee77a",
+              "leftValue": "={{ $('Parse Invoice JSON').item.json.invoice_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        512,
+        240
+      ],
+      "id": "5a6366e7-60a4-49e8-bbd9-5812b56fabe4",
+      "name": "Retry Validation"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1Lp1ZnRnFKZtwiGOqXb6gSq9h79ocXTi_dnNEjeebthU",
+          "mode": "list",
+          "cachedResultName": "Invoice Processing Logs",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Lp1ZnRnFKZtwiGOqXb6gSq9h79ocXTi_dnNEjeebthU/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Lp1ZnRnFKZtwiGOqXb6gSq9h79ocXTi_dnNEjeebthU/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "invoice_id",
+              "lookupValue": "={{ $json.invoice_id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        624,
+        -16
+      ],
+      "id": "8497b537-8f1b-483b-974d-a9da871dc38d",
+      "name": "Check Duplicate Invoice",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "7eQI3XVeAg6ZPUah",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "212017f4-4561-4bbd-bdc7-06dfab4b9c22",
+              "leftValue": "={{ $json.row_number }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        800,
+        -16
+      ],
+      "id": "4da76e78-c2f6-4dc8-b69c-968c86d3e615",
+      "name": "Duplicate Check"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "17Zfb6zGgOKHMiOvwFBRezvC6GKnpTqiR8fPX-VPRaOc",
+          "mode": "list",
+          "cachedResultName": "Workflow Execution Logs",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/17Zfb6zGgOKHMiOvwFBRezvC6GKnpTqiR8fPX-VPRaOc/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/17Zfb6zGgOKHMiOvwFBRezvC6GKnpTqiR8fPX-VPRaOc/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "timestamp": "={{$now}}",
+            "invoice_id": "={{ $json.invoice_id }}",
+            "status": "SUCCESS",
+            "stage": "Invoice Saved",
+            "error_reason": "None"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "invoice_id",
+              "displayName": "invoice_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "stage",
+              "displayName": "stage",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "error_reason",
+              "displayName": "error_reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1136,
+        144
+      ],
+      "id": "31174ee6-eb36-4678-8a9a-b3cf450ec767",
+      "name": "Log Successful Processing",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "7eQI3XVeAg6ZPUah",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "17Zfb6zGgOKHMiOvwFBRezvC6GKnpTqiR8fPX-VPRaOc",
+          "mode": "list",
+          "cachedResultName": "Workflow Execution Logs",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/17Zfb6zGgOKHMiOvwFBRezvC6GKnpTqiR8fPX-VPRaOc/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/17Zfb6zGgOKHMiOvwFBRezvC6GKnpTqiR8fPX-VPRaOc/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "timestamp": "={{$now}}",
+            "invoice_id": "={{$json.invoice_id}}",
+            "status": "FAILED",
+            "stage": "Manual Review",
+            "error_reason": "Missing invoice_id"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "invoice_id",
+              "displayName": "invoice_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "stage",
+              "displayName": "stage",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "error_reason",
+              "displayName": "error_reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1040,
+        -32
+      ],
+      "id": "257dcb87-9438-495c-966c-48bc4fe5a23b",
+      "name": "Log Failed Processing",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "7eQI3XVeAg6ZPUah",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "responses": {
+          "values": [
+            {
+              "content": "=Extract the following fields from this invoice text:\n\n- vendor\n- invoice_id\n- amount\n- due_date\n\nRules:\n- Return ONLY valid JSON\n- If a field is missing, return null\n- Do not invent values\n- invoice_id should contain only the actual invoice number\n\nInvoice Text:\n{{$json.invoice_text}}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        0,
+        0
+      ],
+      "id": "ff7c5361-68c0-4cbb-9a6a-060a743371ee",
+      "name": "Extract Invoice Fields",
+      "credentials": {
+        "openAiApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1Lp1ZnRnFKZtwiGOqXb6gSq9h79ocXTi_dnNEjeebthU",
+          "mode": "list",
+          "cachedResultName": "Invoice Processing Logs",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Lp1ZnRnFKZtwiGOqXb6gSq9h79ocXTi_dnNEjeebthU/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Lp1ZnRnFKZtwiGOqXb6gSq9h79ocXTi_dnNEjeebthU/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "vendor": "={{ $('Parse Invoice JSON').item.json.vendor }}",
+            "invoice_id": "={{ $('Parse Invoice JSON').item.json.invoice_id }}",
+            "amount": "={{ $('Parse Invoice JSON').item.json.amount }}",
+            "due_date": "={{ $('Parse Invoice JSON').item.json.due_date }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "vendor",
+              "displayName": "vendor",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "invoice_id",
+              "displayName": "invoice_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "amount",
+              "displayName": "amount",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "due_date",
+              "displayName": "due_date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        992,
+        144
+      ],
+      "id": "3fc8cdd2-43aa-45b4-be62-4eb3954c5ca6",
+      "name": "Save Valid Invoice",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "7eQI3XVeAg6ZPUah",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1RRFnw-Y9SDVK5UppLJzzbwE8UwAvxNrj32u_ZU8guHk",
+          "mode": "list",
+          "cachedResultName": "Manual Review Queue",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1RRFnw-Y9SDVK5UppLJzzbwE8UwAvxNrj32u_ZU8guHk/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1RRFnw-Y9SDVK5UppLJzzbwE8UwAvxNrj32u_ZU8guHk/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "raw_invoice_text": "={{ $('Mock Invoice Data').item.json.invoice_text }}",
+            "timestamp": "={{ $now }}",
+            "error_reason": "Missing invoice_id"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "raw_invoice_text",
+              "displayName": "raw_invoice_text",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "error_reason",
+              "displayName": "error_reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        720,
+        256
+      ],
+      "id": "3c2872d0-305f-4bce-b6e1-c61bae5f8e43",
+      "name": "Save Manual Review Case",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "7eQI3XVeAg6ZPUah",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "responses": {
+          "values": [
+            {
+              "content": "=Extract the following fields from this invoice text:\n\n- vendor\n- invoice_id\n- amount\n- due_date\n\nRules:\n- Return ONLY valid JSON\n- Do not include explanations\n- If a field is missing, return null\n- invoice_id should contain only the actual invoice number value\n\nInvoice Text:\n{{$('Mock Invoice Data').item.json.invoice_text}}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        112,
+        240
+      ],
+      "id": "0df708d8-3034-4b43-8890-a1de9194d694",
+      "name": "Retry Invoice Extraction",
+      "credentials": {
+        "openAiApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "try {\n  const rawText = $json.output[0].content[0].text;\n\n  const cleanedText = rawText.replace(/```json|```/g, '').trim();\n\n  const parsed = JSON.parse(cleanedText);\n\n  return [{ json: parsed }];\n\n} catch (error) {\n\n  return [{\n    json: {\n      parsing_error: true,\n      raw_output: $json.output[0].content[0].text\n    }\n  }];\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        368,
+        240
+      ],
+      "id": "e1999607-8cab-439d-b22e-971e3042c9c9",
+      "name": "Parse Retry Output"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Mock Invoice Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mock Invoice Data": {
+      "main": [
+        [
+          {
+            "node": "Extract Invoice Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Invoice JSON": {
+      "main": [
+        [
+          {
+            "node": "Validate Invoice Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Invoice Data": {
+      "main": [
+        [
+          {
+            "node": "Check Duplicate Invoice",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Retry Invoice Extraction",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Retry Validation": {
+      "main": [
+        [
+          {
+            "node": "Check Duplicate Invoice",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Save Manual Review Case",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Duplicate Invoice": {
+      "main": [
+        [
+          {
+            "node": "Duplicate Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Duplicate Check": {
+      "main": [
+        [
+          {
+            "node": "Log Failed Processing",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Save Valid Invoice",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Invoice Fields": {
+      "main": [
+        [
+          {
+            "node": "Parse Invoice JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Valid Invoice": {
+      "main": [
+        [
+          {
+            "node": "Log Successful Processing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Manual Review Case": {
+      "main": [
+        [
+          {
+            "node": "Log Failed Processing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Retry Invoice Extraction": {
+      "main": [
+        [
+          {
+            "node": "Parse Retry Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Retry Output": {
+      "main": [
+        [
+          {
+            "node": "Retry Validation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "d7f0a4c5-c625-4007-aac2-cc36cad7fb41",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b61883a6a56c36d048b9b4ea02da9f7434c6f2233d3db296aa0344b0e670b5d5"
+  },
+  "id": "WXbsFiz6ti41wy9B",
+  "tags": []
+}
